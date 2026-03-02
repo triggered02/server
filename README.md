@@ -1,66 +1,88 @@
-# How to Create a Free Windows 10 RDP using GitHub | Getscreen Method | 30 min timelimit bypassed
+# Bedrock Voice Chat on Linux (Quick Install Guide)
 
-Hey there, tech enthusiasts! Welcome to this step-by-step guide on setting up your very own free Windows 10 RDP using the powerful combo of GitHub and the Getscreen method. 🚀
+If your goal is **"I want to learn how to install it on Linux"**, start here.
 
-## Introduction
+This repository includes a local mirror of the upstream wiki:
 
-Let's kick things off by breaking down the process into simple, digestible chunks. No worries if you're new to this – we'll walk you through it. If you haven't got a GitHub account yet, don't sweat it! Check out our quick [video tutorial on creating a GitHub account]
-## Getscreen Account Setup
+- Source wiki: https://github.com/Alaydriem/bedrock-voice-chat.wiki.git
+- Mirror path: `docs/bedrock-voice-chat-wiki/`
+- Full guide: `docs/bedrock-voice-chat-wiki/BVC-Server-Installation.md`
 
-Alright, let's get that [Getscreen](https://getscreen.me/en/registration) account rolling. Creating an account there is a breeze, and I'll show you how – it'll take literally 1 second! Just copy your Getscreen email to a textpad – we promise it's that easy. ⚡
+## Prerequisites
 
-## Downloading the GitHub Workflow
+- A Linux server with a public IP (VPS or dedicated host).
+- A domain name pointing to your server.
+- TLS certificate files for your domain.
+- Bedrock Voice Chat server binary for Linux.
 
-Now, let's snag that GitHub workflow. In the [description] Telegram(https://t.me/donyface), you'll find links to different mirrors. It's like having backup plans for your backup plans! If the server decides to snooze, you're covered. Oh, and don't worry about mirror links – we've got an explanatory 
+## Linux installation steps
 
-## Video Tutorial In Youtube (H0w To)
-# [Watch The Video]
+1. **Create the install folder**
 
-## Let's Get Started!
+   ```bash
+   sudo mkdir -p /opt/bvc
+   sudo chown "$USER":"$USER" /opt/bvc
+   ```
 
-Alright, tech champs, it's time to put the pieces together. You've got your GitHub account, your shiny new Getscreen account, and that trusty GitHub workflow. Ready to dive in? Let's roll!
+2. **Download or upload the Linux server binary** into `/opt/bvc`.
 
-### Tutorial Walkthrough
+3. **Create `/opt/bvc/config.hcl`**
 
-1. Head over to GitHub, create a new public repository, and click that "Upload files" button.
-2. Remember that workflow file you downloaded? Drag and drop those files like a pro coder!
-3. If you're on mobile, don't stress – we've got your back.
+   Use the same structure documented in the wiki page and set:
+   - your public hostname in `server.tls.names`
+   - your public IP in `server.tls.ips`
+   - certificate and key paths in `server.tls`
+   - a strong `minecraft.access_token`
 
-### Adding Workflow Files
+4. **Create the systemd service** at `/etc/systemd/system/bedrock-voice-chat.service`:
 
-1. Upload that readme.md file first.
-2. Create a new file, name it ".github/workflows/test", commit those changes.
-3. Add two workflow files – easy-peasy!
+   ```ini
+   [Unit]
+   Description=Bedrock Voice Chat Service
+   After=network.target
 
-### ADDING YOUR GETSCREEN MAIL TO WORKFLOWS (importaint part)
+   [Service]
+   Type=simple
+   ExecStart=/opt/bvc/bedrock-voice-chat-server server --config-file /opt/bvc/config.hcl
+   Restart=always
+   WorkingDirectory=/opt/bvc
+   KillSignal=SIGTERM
+   KillMode=mixed
+   TimeoutStopSec=5s
 
-1. Click one of workflows and find this "EMAIL_SECRET=Your Get Screen Mail" 
-2. Replace your copied mail in here , ex: "EMAIL_SECRET=example@gmail.com"
-3. Do same as to the other workflow. If you dosen't get this right you will not get rdp so watch the video
+   [Install]
+   WantedBy=multi-user.target
+   ```
 
-### Running the Workflow
+5. **Enable and start the service**
 
-Woo-hoo! Here comes the fun part:
-1. Click on the "Actions" tab.
-2. Choose one of those workflows.
-3. Hit "Run workflow".
-4. If you don't see your run, just give it a quick refresh.
-5. Click on the workflow run, hit "Build now", and then... it's waiting time!
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now bedrock-voice-chat
+   ```
 
-### Getscreen and Connect
+6. **Verify logs**
 
-Once the workflow wraps up:
-1. Check Getscreen – your RDP will be grinning with a green dot!
-2. Green means go, right? Click "Connect" and say hello to your RDP buddy.
-3. Runneradmin, prepare to meet your new best friend!
+   ```bash
+   sudo journalctl -u bedrock-voice-chat -f
+   ```
 
-### Speed Test and Conclusion
+## Important notes
 
-Let's wrap it up with a snappy speed test – after all, you deserve a lightning-fast RDP experience! There you have it, your very own Windows 10 RDP, set up and ready for action.
+- Open/forward the port you configure for BVC (commonly `443`).
+- You must use the expected Azure Client ID documented in the upstream wiki when configuring auth.
+- If your Minecraft server cannot run custom executables directly, host BVC separately.
 
-## Final Thoughts
+## Next docs to read
 
-As we wrap things up, here's a tip – if the first run doesn't quite get you an RDP, don't stress. Give it another shot, and remember, moderation is key. Use this method wisely to keep it going!
+- `docs/bedrock-voice-chat-wiki/BVC-Server-Installation.md`
+- `docs/bedrock-voice-chat-wiki/BDS-Server-Pack-Installation.md`
+- `docs/bedrock-voice-chat-wiki/Logging-In-to-Bedrock-Voice-Chat-Client.md`
 
+## Refreshing the wiki mirror
 
-Thanks for joining us on this tech journey. Remember, tech adventures can be both fun and straightforward. Drop a star ⭐️ if you found this guide helpful, hit that "Follow" button, and we'll catch you in the next tutorial. Stay tech-savvy, stay awesome! 🎉
+```bash
+rm -rf /tmp/bedrock-voice-chat.wiki
+git clone https://github.com/Alaydriem/bedrock-voice-chat.wiki.git /tmp/bedrock-voice-chat.wiki
+rsync -a --delete --exclude='.git' /tmp/bedrock-voice-chat.wiki/ docs/bedrock-voice-chat-wiki/
+```
